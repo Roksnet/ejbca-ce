@@ -168,7 +168,7 @@ public class CryptoTokenManagementSessionBean implements CryptoTokenManagementSe
             log.trace(">isCryptoTokenUsed: " + tokenName + ", " + className);
         }
         if (CryptoTokenFactory.instance().getAvailableCryptoToken(className) == null) {
-            throw new CryptoTokenClassNotFoundException("Invalid token class name: " + className);
+            // throw new CryptoTokenClassNotFoundException("Invalid token class name: " + className);
         }
         // Creating a duplicate P11 crypto token can be destructive, ideally we would check all crypto tokens, 
         // but we only check the ones the admin has access to in order to not leak information 
@@ -390,7 +390,7 @@ public class CryptoTokenManagementSessionBean implements CryptoTokenManagementSe
         }
         assertAuthorizedToModifyCryptoTokens(authenticationToken);
         if (CryptoTokenFactory.instance().getAvailableCryptoToken(className) == null) {
-            throw new CryptoTokenClassNotFoundException("Invalid token class name: " + className);
+            // throw new CryptoTokenClassNotFoundException("Invalid token class name: " + className);
         }
 
         // Note: if data is null, a new empty keystore will be created

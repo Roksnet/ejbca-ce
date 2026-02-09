@@ -541,6 +541,7 @@
         		<include name="x509-common-util*.jar" />
             	<include name="cryptotokens-*.jar" />
         		<include name="p11ng-*.jar" />
+				<include name="cloudhsm-jce-*.jar" />
             	<!-- Internally generated WS server and client files. -->
             	<include name="ejbca-ws-client-gen.jar"/>
             </zipfileset>

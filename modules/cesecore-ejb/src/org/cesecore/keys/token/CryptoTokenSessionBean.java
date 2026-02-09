@@ -168,6 +168,9 @@ public class CryptoTokenSessionBean implements CryptoTokenSessionLocal, CryptoTo
                 inClassname = act.getClassPath();
             }
         }
+        if (inClassname == null && "CaviumCryptoToken".equals(tokenType)) {
+            return "org.cesecore.keys.token.CaviumCryptoToken";
+        }
         return inClassname;
     }
 
@@ -184,6 +187,9 @@ public class CryptoTokenSessionBean implements CryptoTokenSessionLocal, CryptoTo
                 tokenType = cryptoToken.getClass().getSimpleName();
                 break;
             }
+        }
+        if ("null".equals(tokenType) && "org.cesecore.keys.token.CaviumCryptoToken".equals(cryptoToken.getClass().getName())) {
+            tokenType = "CaviumCryptoToken";
         }
         final long lastUpdate = System.currentTimeMillis();
         final Properties tokenProperties = cryptoToken.getProperties();

@@ -50,6 +50,8 @@ dependencies {
     compileOnly(libs.jboss.transaction.api.v12.spec)
     compileOnly(libs.stax.ex)
     compileOnly(libs.txw2)
+    // CloudHSM JCE Provider
+    compileOnly(libs.cloudhsm)
 
     testImplementation(project(":modules:cesecore-entity"))
     testImplementation(project(":modules:cesecore-x509ca"))
@@ -99,6 +101,7 @@ tasks.processTestResources {
 
 // Required by Pkcs11WrapperUnitTest
 tasks.withType<Test> {
+
     jvmArgs(
         "--add-exports", "jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED"
     )

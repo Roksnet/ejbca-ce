@@ -38,6 +38,7 @@
         <path location="${mod.cesecore-x509ca.lib}"/>
 		<path refid="lib.x509-common-util.classpath"/>
 		<path refid="lib.cryptotokens.classpath"/>
+		<path refid="lib.cloudhsm.classpath"/>
 	</path>
 
 	<!-- The buildservicemanifest needs additional classes in order to run.
@@ -69,9 +70,15 @@
 		<mkdir dir="${cesecore-common.dir}/build/classes"/>
 		<javac srcdir="${cesecore-common.dir}/src" destdir="${cesecore-common.build.dir}/classes" debug="on" includeantruntime="no" encoding="UTF-8" target="${java.target.version}">
 			<classpath refid="compile.classpath"/>
+			<compilerarg value="--add-modules" />
+			<compilerarg value="jdk.crypto.cryptoki" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED" />
+			<compilerarg value="--add-exports" />
+			<compilerarg value="jdk.crypto.cryptoki/sun.security.pkcs11=ALL-UNNAMED" />
 		</javac>
 		<!-- generates dynamically META-INF/services for the ServiceLocator to find plugin implementations -->
-		<buildservicemanifest interface="org.cesecore.certificates.ocsp.extension.OCSPExtension;org.cesecore.authentication.tokens.AuthenticationTokenMetaData;org.cesecore.certificates.ca.CvcPlugin;org.cesecore.authorization.rules.AccessRulePlugin;org.cesecore.configuration.ConfigurationCache;org.cesecore.certificates.certificate.certextensions.CustomCertificateExtension;org.cesecore.keys.validation.Validator;org.cesecore.certificates.ca.CACommon;com.keyfactor.util.keys.token.pkcs11.PKCS11SlotListWrapperFactory;com.keyfactor.util.certificate.CertificateImplementation;com.keyfactor.util.crypto.provider.CryptoProvider"
+		<buildservicemanifest interface="org.cesecore.certificates.ocsp.extension.OCSPExtension;org.cesecore.authentication.tokens.AuthenticationTokenMetaData;org.cesecore.certificates.ca.CvcPlugin;org.cesecore.authorization.rules.AccessRulePlugin;org.cesecore.configuration.ConfigurationCache;org.cesecore.certificates.certificate.certextensions.CustomCertificateExtension;org.cesecore.keys.validation.Validator;org.cesecore.certificates.ca.CACommon;com.keyfactor.util.keys.token.pkcs11.PKCS11SlotListWrapperFactory;com.keyfactor.util.certificate.CertificateImplementation;com.keyfactor.util.crypto.provider.CryptoProvider;com.keyfactor.util.keys.token.CryptoToken"
     		file="${cesecore-common.dir}/build/classes" classpath="manifest.classpath"/>
 		<mkdir dir="${cesecore-common.dir}/dist"/>
 		<jar destfile="${cesecore-common.dir}/dist/cesecore-common.jar">

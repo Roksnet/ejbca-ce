@@ -60,6 +60,7 @@ import org.cesecore.keys.token.AvailableCryptoToken;
 import org.cesecore.keys.token.AwsKmsAuthenticationType;
 import org.cesecore.keys.token.AzureAuthenticationType;
 import org.cesecore.keys.token.AzureCryptoToken;
+import org.cesecore.keys.token.CaviumCryptoToken;
 import org.cesecore.keys.token.CryptoTokenConstants;
 import org.cesecore.keys.token.CryptoTokenFactory;
 import org.cesecore.keys.token.CryptoTokenInfo;
@@ -258,6 +259,10 @@ public class CryptoTokenMBean extends BaseManagedBean implements Serializable {
 
         public boolean isP11NG() {
             return CryptoTokenFactory.JACKNJI_SIMPLE_NAME.equals(cryptoTokenInfo.getType());
+        }
+
+        public boolean isCaviumType() {
+             return CaviumCryptoToken.class.getSimpleName().equals(cryptoTokenInfo.getType());
         }
 
         public boolean isAzureType() {
@@ -1294,6 +1299,32 @@ public class CryptoTokenMBean extends BaseManagedBean implements Serializable {
                         return;
                     }
                 }
+            } else if (CaviumCryptoToken.class.getSimpleName().equals(getCurrentCryptoToken().getType())) {
+                className = CaviumCryptoToken.class.getName();
+                
+                // Map the GUI "PKCS#11 Library" field to "sharedLibrary" property
+                String library = getCurrentCryptoToken().getP11Library();
+                if (StringUtils.isNotBlank(library)) {
+                    properties.setProperty("sharedLibrary", library);
+                }
+
+                // Map the GUI "Slot" field to either "slot" or "slotListIndex" based on label type
+                String slotTextValue = getCurrentCryptoToken().getP11Slot().trim();
+                String slotLabelType = getCurrentCryptoToken().getP11SlotLabelType(); // SLOT_NUMBER or SLOT_INDEX
+                
+                if (Pkcs11SlotLabelType.SLOT_INDEX.getKey().equals(slotLabelType)) {
+                     // For slot index "i0", we strip 'i' 
+                     String idxStr = slotTextValue.startsWith("i") ? slotTextValue.substring(1) : slotTextValue;
+                     if (StringUtils.isNumeric(idxStr)) {
+                         properties.setProperty("slotListIndex", idxStr);
+                     }
+                } else {
+                     // Default to slot ID
+                     if (StringUtils.isNumeric(slotTextValue)) {
+                          properties.setProperty("slot", slotTextValue);
+                     }
+                }
+
             } else if (SoftCryptoToken.class.getSimpleName().equals(getCurrentCryptoToken().getType())) {
                 className = SoftCryptoToken.class.getName();
             } else if (AzureCryptoToken.class.getSimpleName().equals(getCurrentCryptoToken().getType())) {
@@ -1572,6 +1603,21 @@ public class CryptoTokenMBean extends BaseManagedBean implements Serializable {
             final String fullClassName = availableCryptoToken.getClassPath();
             ret.add(new SelectItem(fullClassName.substring(fullClassName.lastIndexOf('.') + 1), availableCryptoToken.getName()));
         }
+
+        boolean found = false;
+        String cloudHsmSimpleName = CaviumCryptoToken.class.getSimpleName();
+        for (SelectItem item : ret) {
+            // SelectItem value is the simple class name (as String or Object)
+            if (cloudHsmSimpleName.equals(item.getValue())) {
+                found = true; 
+                break;
+            }
+        }
+        if (!found) {
+            // Manually inject if not found
+            ret.add(new SelectItem(cloudHsmSimpleName, "Cavium")); 
+        }
+
         return ret;
     }
 

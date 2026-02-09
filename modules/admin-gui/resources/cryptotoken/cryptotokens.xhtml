@@ -78,8 +78,10 @@
                         rendered="#{cryptoTokenGuiInfo.securosysType}" />
                     <h:outputText value="#{web.text.CRYPTOTOKEN_TYPE_AWSKMS}"
                         rendered="#{cryptoTokenGuiInfo.AWSKMSType}" />
+                    <h:outputText value="#{web.text.CRYPTOTOKEN_TYPE_CAVIUM}"
+                        rendered="#{cryptoTokenGuiInfo.caviumType}" />
 					<h:outputText value="#{web.text.CRYPTOTOKEN_TYPE_SOFT}"
-						rendered="#{!cryptoTokenGuiInfo.p11SlotType &amp;&amp; !cryptoTokenGuiInfo.fortanixType &amp;&amp; !cryptoTokenGuiInfo.azureType &amp;&amp; !cryptoTokenGuiInfo.securosysType &amp;&amp; !cryptoTokenGuiInfo.AWSKMSType}" />
+						rendered="#{!cryptoTokenGuiInfo.p11SlotType &amp;&amp; !cryptoTokenGuiInfo.fortanixType &amp;&amp; !cryptoTokenGuiInfo.azureType &amp;&amp; !cryptoTokenGuiInfo.securosysType &amp;&amp; !cryptoTokenGuiInfo.AWSKMSType &amp;&amp; !cryptoTokenGuiInfo.caviumType}" />
 				</h:column>
 				<h:column>
 					<f:facet name="header">
