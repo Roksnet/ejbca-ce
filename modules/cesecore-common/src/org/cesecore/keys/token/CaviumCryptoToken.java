@@ -1,9 +1,8 @@
 package org.cesecore.keys.token;
 
 import java.io.IOException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.security.*;
 import java.security.spec.AlgorithmParameterSpec;
@@ -59,12 +58,13 @@ public class CaviumCryptoToken implements CryptoToken {
     private KeyStore keyStore;
     private Provider provider;
     private char[] pin;
-    private File keyStoreFile;
+    private byte[] data;
 
     @Override
     public void init(Properties properties, byte[] data, int id) throws Exception {
         this.id = id;
         this.properties = properties;
+        this.data = data;
     }
 
     @Override
@@ -99,13 +99,10 @@ public class CaviumCryptoToken implements CryptoToken {
             if (this.keyStore == null) {
                 this.keyStore = KeyStore.getInstance(CloudHsmProvider.CLOUDHSM_KEYSTORE_TYPE);
             }
-            // Load keystore (try to load file backed certs if available)
-            String homeDir = System.getProperty("user.home");
-            this.keyStoreFile = new File(homeDir, "cloudhsm-keystore.p12");
-            
-            if (this.keyStoreFile.exists()) {
-                 try (FileInputStream fis = new FileInputStream(this.keyStoreFile)) {
-                    this.keyStore.load(fis, keyStorePassword); 
+            // Load keystore from data
+            if (this.data != null && this.data.length > 0) {
+                 try (ByteArrayInputStream bais = new ByteArrayInputStream(this.data)) {
+                    this.keyStore.load(bais, keyStorePassword); 
                  }
             } else {
                 this.keyStore.load(null, keyStorePassword);
@@ -321,9 +318,6 @@ public class CaviumCryptoToken implements CryptoToken {
             // Note: passing 'null' for password is standard for HSM keystores (no key-specific password)
             if (this.keyStore != null) {
                 this.keyStore.setKeyEntry(alias, keyPair.getPrivate(), null, chain);
-                try (FileOutputStream fos = new FileOutputStream(this.keyStoreFile)) {
-                    this.keyStore.store(fos, keyStorePassword); 
-                }
             }
 
         } catch (Exception e) {
@@ -444,10 +438,6 @@ public class CaviumCryptoToken implements CryptoToken {
                 // CloudHSM JCE might throw if the key was already destroyed or if it only supports cert deletion
                 log.warn("Failed to delete entry from keystore (cert): " + alias + ": " + e.getMessage());
             }
-
-            try (FileOutputStream fos = new FileOutputStream(this.keyStoreFile)) {
-                this.keyStore.store(fos, keyStorePassword);
-            }
         }
     }
     
@@ -461,7 +451,16 @@ public class CaviumCryptoToken implements CryptoToken {
     }
     @Override public Properties getProperties() { return properties; }
     @Override public String getSignProviderName() { return CloudHsmProvider.PROVIDER_NAME; }
-    @Override public byte[] getTokenData() { return null; }
+    @Override public byte[] getTokenData() { 
+        if (keyStore == null) return null;
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            keyStore.store(baos, keyStorePassword);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            log.error("Failed to get token data", e);
+            return null;
+        }
+    }
     @Override public int getTokenStatus() { return keyStore != null ? 1 : 0; }
     @Override public void reset() { }
     @Override public void setProperties(Properties properties) { this.properties = properties; }
@@ -509,11 +508,6 @@ public class CaviumCryptoToken implements CryptoToken {
     @Override public void storeKey(String alias, Key key, Certificate[] chain, char[] password) throws KeyStoreException {
          if (keyStore != null) {
              keyStore.setKeyEntry(alias, key, password, chain);
-             try (FileOutputStream fos = new FileOutputStream(this.keyStoreFile)) {
-                 this.keyStore.store(fos, keyStorePassword);
-             } catch (Exception e) {
-                 throw new KeyStoreException("Failed to store keystore: " + e.getMessage(), e);
-             }
          }
     }
     @Override public boolean isAutoActivationPinPresent() { return false; }
@@ -537,9 +531,6 @@ public class CaviumCryptoToken implements CryptoToken {
             
             keyStore.setKeyEntry(alias, sk, null, null);
             
-            try (FileOutputStream fos = new FileOutputStream(this.keyStoreFile)) {
-                 this.keyStore.store(fos, keyStorePassword); 
-            }
             log.info("Symmetric key generated and stored: " + alias);
             
         } catch (Exception e) {
