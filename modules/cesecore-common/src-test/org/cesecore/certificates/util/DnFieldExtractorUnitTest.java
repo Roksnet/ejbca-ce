@@ -16,7 +16,10 @@ package org.cesecore.certificates.util;
 import java.util.HashMap;
 
 import com.keyfactor.util.certificate.DnComponents;
+import com.keyfactor.util.CeSecoreNameStyle;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -28,6 +31,29 @@ import static org.junit.Assert.assertTrue;
  * Tests the DNFieldExtractor class.
  */
 public class DnFieldExtractorUnitTest {
+
+    @Test
+    public void testCommunityOrganizationIdentifier() throws Exception {
+        assertTrue(DnComponents.isDnProfileField(DnComponents.ORGANIZATIONIDENTIFIER));
+        assertEquals(Integer.valueOf(300), DnComponents.getDnIdFromDnName("organizationIdentifier"));
+        assertEquals(Integer.valueOf(300), DnComponents.getProfilenameIdMap().get(DnComponents.ORGANIZATIONIDENTIFIER));
+        assertEquals("DN_ORGANIZATIONIDENTIFIER",
+                DnComponents.getLanguageConstantFromProfileName(DnComponents.ORGANIZATIONIDENTIFIER));
+        assertEquals("2.5.4.97", DnComponents.getOid("organizationIdentifier").getId());
+        assertEquals("2.5.4.97", CeSecoreNameStyle.ORGANIZATION_IDENTIFIER.getId());
+
+        final String dn = "CN=Roksnet Trust Service TSU1,O=Roksnet Solutions OÜ,C=EE,organizationIdentifier=NTREE12998179";
+        final DNFieldExtractor extractor = new DNFieldExtractor(dn, DNFieldExtractor.TYPE_SUBJECTDN);
+        assertFalse(extractor.isIllegal());
+        assertFalse(extractor.existsOther());
+        assertEquals("NTREE12998179", extractor.getField(300, 0));
+
+        final X500Name subject = new X500Name(CeSecoreNameStyle.INSTANCE, dn);
+        final X500Name decoded = X500Name.getInstance(subject.getEncoded());
+        assertEquals(1, decoded.getRDNs(CeSecoreNameStyle.ORGANIZATION_IDENTIFIER).length);
+        assertEquals("NTREE12998179", IETFUtils.valueToString(
+                decoded.getRDNs(CeSecoreNameStyle.ORGANIZATION_IDENTIFIER)[0].getFirst().getValue()));
+    }
 
     @Test
     public void test01CheckDnFields() throws Exception {
@@ -44,7 +70,7 @@ public class DnFieldExtractorUnitTest {
         if (DnComponents.enterpriseMappingsExist()) {
             assertEquals(54, i.size());
         } else {
-            assertEquals(32, i.size());
+            assertEquals(33, i.size());
         }
     	String cn = extractor.getField(DNFieldExtractor.CN, 0);
     	assertEquals("Tomas Gustavsson", cn);

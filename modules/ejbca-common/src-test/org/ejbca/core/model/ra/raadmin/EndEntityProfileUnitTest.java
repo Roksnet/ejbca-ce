@@ -44,6 +44,36 @@ public class EndEntityProfileUnitTest {
     private static final CertificateProfile certProfile = new CertificateProfile(CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER);
 
     @Test
+    public void testFixedOrganizationIdentifierWithUserGeneratedToken() throws Exception {
+        final EndEntityProfile profile = new EndEntityProfile();
+        profile.setValue(EndEntityProfile.AVAILCAS, 0, Integer.toString(SecConst.ALLCAS));
+        profile.setValue(EndEntityProfile.AVAILKEYSTORE, 0, Integer.toString(SecConst.TOKEN_SOFT_BROWSERGEN));
+        profile.addField(DnComponents.ORGANIZATION);
+        profile.addField(DnComponents.COUNTRY);
+        profile.addField(DnComponents.ORGANIZATIONIDENTIFIER);
+        profile.setValue(DnComponents.ORGANIZATIONIDENTIFIER, 0, "NTREE12998179");
+        profile.setRequired(DnComponents.ORGANIZATIONIDENTIFIER, 0, true);
+        profile.setModifyable(DnComponents.ORGANIZATIONIDENTIFIER, 0, false);
+
+        final String dn = "CN=Roksnet Trust Service TSU1,O=Roksnet Solutions OÜ,C=EE";
+        final EndEntityInformation user = new EndEntityInformation("orgidtest", dn + ",organizationIdentifier=NTREE12998179",
+                123, "", "", new EndEntityType(EndEntityTypes.ENDUSER), 123, CertificateProfileConstants.CERTPROFILE_FIXED_ENDUSER,
+                SecConst.TOKEN_SOFT_BROWSERGEN, null);
+        user.setPassword("foo123");
+        profile.doesUserFulfillEndEntityProfile(user, certProfile, false, null);
+
+        for (final String invalidDn : new String[] {dn, dn + ",organizationIdentifier=WRONG"}) {
+            user.setDN(invalidDn);
+            try {
+                profile.doesUserFulfillEndEntityProfile(user, certProfile, false, null);
+                fail("Missing or changed fixed organizationIdentifier must be rejected");
+            } catch (EndEntityProfileValidationException expected) {
+                // Required and non-modifiable profile validation must remain enforced.
+            }
+        }
+    }
+
+    @Test
     public void testEndEntityProfileDiff() {
         EndEntityProfile foo = new EndEntityProfile();
         EndEntityProfile bar = new EndEntityProfile();
